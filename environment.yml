@@ -1,0 +1,20 @@
+name: "renewables"
+
+channels:
+  - conda-forge
+  - pip
+
+dependencies:
+  
+
+  
+    - jupyter
+    - numpy
+    - pandas
+    - matplotlib
+    - seaborn
+    - pyjanitor
+    - missingno
+    - plotly==5.22.0
+  
+  
