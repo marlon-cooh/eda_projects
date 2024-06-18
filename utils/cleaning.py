@@ -18,6 +18,8 @@ class Drop:
         """
         for col in cols:
             self.pandas_obj[col] = self.pandas_obj[col].apply(lambda x: int(re.sub(reg, "", str(x))) / 4127.50)
+            
+        return self.pandas_obj
 
 def run():
     pass
