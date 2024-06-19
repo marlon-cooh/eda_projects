@@ -16,8 +16,11 @@ class Drop:
             `cols`: column value to be converted,
             `reg` : regular expression to replace, by default = ","        
         """
-        for col in cols:
-            self.pandas_obj[col] = self.pandas_obj[col].apply(lambda x: int(re.sub(reg, "", str(x))) / 4127.50)
+        try:
+            for col in cols:
+                self.pandas_obj[col] = self.pandas_obj[col].apply(lambda x: int(re.sub(reg, "", str(x))))
+        except ValueError:
+            print("Dataset is already cleaned.")
             
         return self.pandas_obj
 
