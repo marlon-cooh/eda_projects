@@ -23,14 +23,14 @@ def weibull_parameters(v):
     c = np.mean(v) / gamma(1 + 1 / k)
     return k, c
 
-def weibull_dist_plot(k, c, n, **kwargs):
+def weibull_dist_plot(k, c, n, ax=None, **kwargs):
     """
     Creates a distribution chart based on Weibull with k shape and c scale parameters to a n-length range of data.
     """
     # Style dictionary
-    default_style = {"plot_color" : "blue", "ylabel" : "Frequency", "xlabel" : "Wind speed (m/s)"}
+    default_style = {"plot_color" : "blue", "ylabel" : "Frequency", "xlabel" : "Wind speed (m/s)", "title" : ""}
     for keywords in kwargs:
-        if keywords in any(default_style.keys()):
+        if keywords in default_style.keys():
             default_style.update({keywords : kwargs[keywords]})
 
     # x, y values
@@ -38,9 +38,11 @@ def weibull_dist_plot(k, c, n, **kwargs):
     weibull = [((k / c) * ((n / c)**(k - 1)) * np.exp(-(n / c)**k)) for n in x]
 
     # Plot settings
-    plt.plot(x, weibull, color=default_style["plot_color"])
-    plt.ylabel(default_style["ylabel"])
-    plt.xlabel(default_style["xlabel"])
+    _, ax = plt.subplots(nrows=1, ncols=1, dpi=110)
+    ax.plot(x, weibull, color=default_style["plot_color"])
+    ax.set_title(default_style["title"])
+    ax.set_ylabel(default_style["ylabel"])
+    ax.set_xlabel(default_style["xlabel"])
     plt.tight_layout()
     plt.show()
 
@@ -87,6 +89,7 @@ class WindCleanMethods:
             year(bool) is False by default: if True, includes the 'Year' column.
         """
         unconverted = self.pd_obj.wclean.useful_columns()
+        unconverted["Fecha"] = pd.to_datetime(unconverted["Fecha"])
 
         try:
             unconverted["Mes"] = unconverted["Fecha"].dt.month
@@ -99,18 +102,18 @@ class WindCleanMethods:
 
         return unconverted
     
-    def hellman_column(self, height_zone, v_zone, alpha_zone) -> pd.DataFrame:
+    def hellman_column(self, height_zone, alpha_zone) -> pd.DataFrame:
         """
             Add
         """
         v_zone = self.pd_obj["Valor"]
         speed_values = f"Valor{height_zone}"
-        hellman_column = self.pd_obj[speed_values] = hellman(
+        self.pd_obj[speed_values] = hellman(
             v_0 = v_zone,
-            height = height_zone,
+            h = height_zone,
             alpha = alpha_zone
         )
-        return hellman_column
+        return self.pd_obj
     
     def hourly_wind_plot(self, speed_values):
         """
@@ -118,26 +121,60 @@ class WindCleanMethods:
         """
 
         plt.figure(figsize=(12, 6))
-        sns.lineplot(x="Hour", y=speed_values, data=self.pd_obj.interpolate(method="linear"))
+        sns.lineplot(x="Hora", y=speed_values, data=self.pd_obj)
         plt.title("Mean wind speed by hour")
         plt.xlabel("Hour")
         plt.xticks(range(0, 24))
         plt.grid(alpha=4/7)
         plt.show()
     
-    def normal_wind_density_dist(self, speed_values):
+    def normal_wind_density_dist(self, speed_values, ax=None, **kwargs):
         """
-            Add
-        """
-        sns.kdeplot(self.pd_obj[speed_values])
-        plt.title("Density distribution of wind speed")
-        plt.xlabel("Wind speed")
-        plt.show()
-    
-    def weibull_plot(self, speed_values, ran=25):
-        """
-            Add
+            Plots the normal density distribution of wind speed.
+
+            Parameters:
+                speed_values (str): Column name containing wind speed data.
+                **kwargs: Optional style parameters:
+                    - ylabel (str): Label for the y-axis (default: "Frequency").
+                    - xlabel (str): Label for the x-axis (default: "Wind speed (m/s)").
+                    - title (str): Title of the plot (default: "Density distribution of wind speed").
+                    - bins (int): Number of bins for the histogram (default: 20).
+            
+            Returns:
+                None: The function plots the distribution on the provided or current axes.
         """
         
-        shape, scale = weibull_parameters(v=self.pd_obj[speed_values])
-        return weibull_dist_plot(k=shape, c=scale, n=ran)
+        # Default style dict.
+        
+        default_style = {"ylabel" : "Frequency", "xlabel" : "Wind speed (m/s)", "title" : "Density distribution of wind speed", "bins" : 20}
+        default_style.update({key : kwargs[key] for key in kwargs if key in default_style})
+        
+        if ax is None:
+            ax = plt.gca()
+        
+        sns.histplot(data=self.pd_obj[speed_values], bins=default_style["bins"], ax=ax)
+        ax.set_title(default_style["title"])
+        ax.set_ylabel(default_style["ylabel"])
+        ax.set_xlabel(default_style["xlabel"])
+    
+    def weibull_plot(self, speed_values, ax=None, ran=25, **kwargs):
+        """
+            Plots the Weibull distribution for wind speed data.
+        """
+        
+        k, c = weibull_parameters(v=self.pd_obj[speed_values])
+        default_style = {"ylabel" : "Frequency", "xlabel" : "Wind speed (m/s)", "title" : ""}      
+        default_style.update({key : kwargs[key] for key in kwargs if key in default_style})
+        
+        # x, y values
+        x = np.linspace(0, ran, 1000)
+        weibull = [((k / c) * ((n / c)**(k - 1)) * np.exp(-(n / c)**k)) for n in x]
+
+        # Plot settings
+        if ax is None:
+            ax = plt.gca()
+        
+        ax.set_title(default_style["title"])
+        sns.lineplot(x=x, y=weibull, ax=ax)  
+        ax.set_ylabel(default_style["ylabel"])
+        ax.set_xlabel(default_style["xlabel"])
