@@ -90,7 +90,7 @@ class WindCleanMethods:
 
         try:
             unconverted["Mes"] = unconverted["Fecha"].dt.month
-            unconverted["Hora"] = unconverted["Fecha"].dt.hora
+            unconverted["Hora"] = unconverted["Fecha"].dt.hour
             if year:
                 unconverted["Year"] = unconverted["Fecha"].dt.year
 
