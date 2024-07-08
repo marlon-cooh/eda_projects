@@ -14,6 +14,7 @@ supported_countries = [
     "BG",
     "CA",
     "CY",
+    "CO",
     "CZ",
     "DE",
     "DK",
